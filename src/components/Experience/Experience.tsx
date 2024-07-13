@@ -99,7 +99,7 @@ export const Experience: FC<IExperience> = ({ soundOn, diceRef }) => {
               receiveShadow
             >
               <planeGeometry />
-              <meshStandardMaterial color={floorColor} />
+              <meshPhongMaterial color={floorColor} />
             </mesh>
           </RigidBody>
         </Physics>

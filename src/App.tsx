@@ -15,10 +15,9 @@ function App() {
     <>
       <Leva hidden={window.location.href.split('#')[1] !== 'debug'} collapsed />
 
-      <Canvas camera={{ position: [8, 5, 0] }} dpr={[1, 2]} shadows>
+      <Canvas camera={{ position: [8, 5, 0] }} dpr={[1, 2]} shadows linear>
         {import.meta.env.DEV && <Perf position="top-left" minimal />}
         <color attach="background" args={['#000000']} />
-        <fog attach="fog" args={['#000000', 10, 20]} />
         <Experience diceRef={diceRef} soundOn={soundOn} />
       </Canvas>
 
