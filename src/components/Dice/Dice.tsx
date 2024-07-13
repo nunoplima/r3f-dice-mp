@@ -61,7 +61,6 @@ export const Dice = forwardRef(
       <RigidBody
         ref={ref}
         position={[0, 3, 0]}
-        restitution={0.05}
         onCollisionEnter={handleCollisionSound}
       >
         <group

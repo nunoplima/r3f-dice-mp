@@ -76,7 +76,7 @@ export const Experience: FC<IExperience> = ({ soundOn, diceRef }) => {
         depthBuffer={depthBuffer}
       />
 
-      <Suspense>
+      <Suspense fallback={null}>
         <Physics gravity={[0, -9.81, 0]} debug={false}>
           <Dice ref={diceRef} soundOn={soundOn} />
 
