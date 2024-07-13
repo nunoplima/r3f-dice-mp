@@ -1,0 +1,8 @@
+Model Information:
+* title:	Free Dice Model (D6) Low Poly 4K
+* source:	https://sketchfab.com/3d-models/free-dice-model-d6-low-poly-4k-0603a7c54a6146a1b83df9a8cdb4b911
+* author:	Seth Gardner (https://sketchfab.com/sethgardner)
+
+Model License:
+* license type:	SKETCHFAB Standard (https://sketchfab.com/licenses)
+* requirements:	Under basic restrictions, use worldwide, on all types of media, commercially or not, and in all types of derivative works
