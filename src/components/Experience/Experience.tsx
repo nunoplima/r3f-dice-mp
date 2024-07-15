@@ -4,9 +4,10 @@ import {
 } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { CuboidCollider, Physics, RigidBody, vec3 } from '@react-three/rapier'
-import { folder, useControls } from 'leva'
+import { useControls } from 'leva'
 import { FC, Suspense, useRef } from 'react'
 import * as THREE from 'three'
+import { schema } from '../../debug.schema'
 import Dice from '../Dice'
 import Spotlight from '../SpotLight'
 import { IExperience } from './Experience.types'
@@ -17,33 +18,14 @@ export const Experience: FC<IExperience> = ({ soundOn, diceRef }) => {
     spotLightOneColor,
     spotLightTwoColor,
     spotLightsIntensity,
-  } = useControls({
-    floor: folder(
-      {
-        floorColor: { value: '#ffffff' },
-      },
-      { collapsed: true },
-    ),
-    lights: folder(
-      {
-        spotLightOneColor: { value: '#0c8cbf' },
-        spotLightTwoColor: { value: '#b00c3f' },
-        spotLightsIntensity: {
-          value: Math.PI * 250,
-          min: 0,
-          max: Math.PI * 1000,
-          step: 0.1,
-        },
-      },
-      { collapsed: true },
-    ),
-  })
+  } = useControls(schema)
 
   const lookAtRef = useRef<THREE.Vector3>(new THREE.Vector3(0, 0, 0))
 
   // depth buffer that only renders once (frames: 1 is optional), which works well for static scenes
   const depthBuffer = useDepthBuffer({ frames: 1 })
 
+  // camera and spotlights will 'follow' the dice
   useFrame(({ camera }) => {
     if (!diceRef.current || !lookAtRef.current) return
 
@@ -78,7 +60,10 @@ export const Experience: FC<IExperience> = ({ soundOn, diceRef }) => {
 
       <Suspense fallback={null}>
         <Physics gravity={[0, -9.81, 0]} debug={false}>
-          <Dice ref={diceRef} soundOn={soundOn} />
+          {/* dice */}
+          <Dice.Controls ref={diceRef} soundOn={soundOn}>
+            <Dice.Model />
+          </Dice.Controls>
 
           {/* walls */}
           <RigidBody type="fixed" name="walls">

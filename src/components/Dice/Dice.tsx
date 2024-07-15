@@ -8,22 +8,25 @@ Title: Free Dice Model (D6) Low Poly 4K
 */
 
 import { useGLTF } from '@react-three/drei'
+import { useFrame } from '@react-three/fiber'
 import {
-  CollisionEnterHandler,
+  CollisionEnterPayload,
   RapierRigidBody,
   RigidBody,
 } from '@react-three/rapier'
-import { ForwardedRef, forwardRef, useState } from 'react'
+import { getState, myPlayer, setState } from 'playroomkit'
+import { FC, ForwardedRef, forwardRef, ReactNode, useState } from 'react'
+import { ERemoteState } from '../../enums'
+import { IDice, IModel } from './Dice.types'
 
-export const Dice = forwardRef(
+export const Dice = ({ children }: IDice) => children
+
+const Controls = forwardRef(
   (
-    { soundOn, ...otherProps }: { soundOn: boolean },
+    { soundOn, children }: { soundOn: boolean; children: ReactNode },
     ref: ForwardedRef<RapierRigidBody>,
   ) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { nodes, materials }: { nodes: any; materials: any } = useGLTF(
-      '/models/dice/dice-draco.gltf',
-    )
+    const me = myPlayer()
 
     const [hitSound] = useState(() => new Audio('/audio/hit.mp3'))
 
@@ -34,22 +37,24 @@ export const Dice = forwardRef(
 
       const diceWasHeldMicroSec = (Date.now() - diceHeldSinceMs) / 100
 
-      ref.current.applyImpulse({ x: 0, y: 10, z: 0 }, true)
-      ref.current.applyTorqueImpulse(
-        {
-          x: (Math.random() - 0.5) * diceWasHeldMicroSec,
-          y: (Math.random() - 0.5) * diceWasHeldMicroSec,
-          z: (Math.random() - 0.5) * diceWasHeldMicroSec,
-        },
-        true,
-      )
+      const impulse = { x: 0, y: 10, z: 0 }
+      const torqueImpulse = {
+        x: Math.random() - 0.5 * diceWasHeldMicroSec,
+        y: Math.random() - 0.5 * diceWasHeldMicroSec,
+        z: Math.random() - 0.5 * diceWasHeldMicroSec,
+      }
+
+      setState(ERemoteState.currentPlayer, me.id)
+
+      ref.current.applyImpulse(impulse, true)
+      ref.current.applyTorqueImpulse(torqueImpulse, true)
     }
 
     const handleDicePick = () => {
       setDiceHeldSinceMs(Date.now())
     }
 
-    const handleCollisionSound: CollisionEnterHandler = (e) => {
+    const handleCollisionSound = (e: CollisionEnterPayload) => {
       if (e.other?.colliderObject?.name !== 'floor' || !soundOn) return
 
       hitSound.currentTime = 0
@@ -57,37 +62,60 @@ export const Dice = forwardRef(
       hitSound.play()
     }
 
+    useFrame(() => {
+      if (typeof ref === 'function' || !ref?.current) return
+
+      if (getState(ERemoteState.currentPlayer) === me.id) {
+        setState(ERemoteState.diceRotation, ref.current.rotation())
+        setState(ERemoteState.dicePosition, ref.current.translation())
+      } else {
+        const position = getState(ERemoteState.dicePosition)
+        const rotation = getState(ERemoteState.diceRotation)
+
+        if (!position || !rotation) return
+
+        ref.current.setRotation(rotation, true)
+        ref.current.setTranslation(position, true)
+      }
+    })
+
     return (
       <RigidBody
         ref={ref}
         position={[0, 3, 0]}
         onCollisionEnter={handleCollisionSound}
       >
-        <group
-          dispose={null}
-          onPointerEnter={() => {
-            document.body.style.cursor = 'pointer'
-          }}
-          onPointerLeave={() => {
-            document.body.style.cursor = 'default'
-          }}
-          {...otherProps}
-        >
-          <group scale={0.01}>
-            <mesh
-              geometry={nodes.redo_uv_Material001_0.geometry}
-              material={materials['Material.001']}
-              rotation={[-Math.PI / 2, 0, 0]}
-              scale={50}
-              onPointerDown={handleDicePick}
-              onPointerUp={handleDiceToss}
-              castShadow
-            />
-          </group>
+        <group onPointerDown={handleDicePick} onPointerUp={handleDiceToss}>
+          {children}
         </group>
       </RigidBody>
     )
   },
 )
+
+const Model: FC<IModel> = (props) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { nodes, materials }: { nodes: any; materials: any } = useGLTF(
+    '/models/dice/dice-draco.gltf',
+  )
+
+  return (
+    <group scale={0.01} dispose={null} {...props}>
+      <mesh
+        geometry={nodes.redo_uv_Material001_0.geometry}
+        material={materials['Material.001']}
+        rotation={[-Math.PI / 2, 0, 0]}
+        scale={50}
+        castShadow
+      />
+    </group>
+  )
+}
+
+Controls.displayName = 'Controls'
+Model.displayName = 'Model'
+
+Dice.Model = Model
+Dice.Controls = Controls
 
 useGLTF.preload('/models/dice/dice-draco.gltf')
