@@ -20,4 +20,18 @@ export const schema = {
     },
     { collapsed: true },
   ),
+  remote: folder({
+    rotationIntFactor: {
+      value: 0.5,
+      min: 0,
+      max: 1,
+      step: 0.01,
+    },
+    positionIntFactor: {
+      value: 0.15,
+      min: 0,
+      max: 1,
+      step: 0.01,
+    },
+  }),
 }

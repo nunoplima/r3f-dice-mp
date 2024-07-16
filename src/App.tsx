@@ -1,18 +1,25 @@
 import { Canvas } from '@react-three/fiber'
 import { RapierRigidBody } from '@react-three/rapier'
 import { Leva } from 'leva'
-import { myPlayer, usePlayersList } from 'playroomkit'
+import { isHost, myPlayer, onPlayerJoin, usePlayersList } from 'playroomkit'
 import { Perf } from 'r3f-perf'
 import { useMemo, useRef, useState } from 'react'
-import Cursor from './components/Cursor'
 import Experience from './components/Experience'
 import UI from './components/UI'
+import { ERemotePlayerState } from './enums'
+import { randomHexColor } from './functions'
+
+onPlayerJoin((player) => {
+  if (!isHost()) return
+
+  player.setState(ERemotePlayerState.color, randomHexColor())
+})
 
 function App() {
+  const diceRef = useRef<RapierRigidBody | null>(null)
+
   const players = usePlayersList(true)
   const me = myPlayer()
-
-  const diceRef = useRef<RapierRigidBody | null>(null)
 
   const [soundOn, setSoundOn] = useState(false)
 
@@ -37,12 +44,12 @@ function App() {
         diceRef={diceRef}
         setSoundOn={setSoundOn}
         soundOn={soundOn}
-        players={players}
+        players={sortedPlayers}
       />
 
-      {sortedPlayers.map((player) => (
+      {/* {sortedPlayers.map((player) => (
         <Cursor key={player.id} player={player} />
-      ))}
+      ))} */}
     </>
   )
 }

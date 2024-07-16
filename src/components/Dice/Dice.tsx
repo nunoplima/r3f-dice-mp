@@ -11,11 +11,16 @@ import { useGLTF } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import {
   CollisionEnterPayload,
+  quat,
   RapierRigidBody,
   RigidBody,
+  vec3,
 } from '@react-three/rapier'
-import { getState, myPlayer, setState } from 'playroomkit'
+import { useControls } from 'leva'
+import { myPlayer, useMultiplayerState } from 'playroomkit'
 import { FC, ForwardedRef, forwardRef, ReactNode, useState } from 'react'
+import * as THREE from 'three'
+import { schema } from '../../debug.schema'
 import { ERemoteState } from '../../enums'
 import { IDice, IModel } from './Dice.types'
 
@@ -26,7 +31,21 @@ const Controls = forwardRef(
     { soundOn, children }: { soundOn: boolean; children: ReactNode },
     ref: ForwardedRef<RapierRigidBody>,
   ) => {
+    const { rotationIntFactor, positionIntFactor } = useControls(schema)
+
     const me = myPlayer()
+    const [position, setPosition] = useMultiplayerState(
+      ERemoteState.dicePosition,
+      new THREE.Vector3(0, 0, 0),
+    )
+    const [rotation, setRotation] = useMultiplayerState(
+      ERemoteState.diceRotation,
+      new THREE.Quaternion(0, 0, 0, 0),
+    )
+    const [currentPlayerId, setCurrentPlayerId] = useMultiplayerState(
+      ERemoteState.currentPlayer,
+      null,
+    )
 
     const [hitSound] = useState(() => new Audio('/audio/hit.mp3'))
 
@@ -44,7 +63,7 @@ const Controls = forwardRef(
         z: Math.random() - 0.5 * diceWasHeldMicroSec,
       }
 
-      setState(ERemoteState.currentPlayer, me.id)
+      setCurrentPlayerId(me.id)
 
       ref.current.applyImpulse(impulse, true)
       ref.current.applyTorqueImpulse(torqueImpulse, true)
@@ -63,19 +82,25 @@ const Controls = forwardRef(
     }
 
     useFrame(() => {
-      if (typeof ref === 'function' || !ref?.current) return
+      if (typeof ref === 'function' || !ref?.current || !currentPlayerId) return
 
-      if (getState(ERemoteState.currentPlayer) === me.id) {
-        setState(ERemoteState.diceRotation, ref.current.rotation())
-        setState(ERemoteState.dicePosition, ref.current.translation())
+      if (currentPlayerId === me.id) {
+        setPosition(ref.current.translation())
+        setRotation(ref.current.rotation())
       } else {
-        const position = getState(ERemoteState.dicePosition)
-        const rotation = getState(ERemoteState.diceRotation)
-
         if (!position || !rotation) return
 
-        ref.current.setRotation(rotation, true)
-        ref.current.setTranslation(position, true)
+        const newPos = vec3(ref.current.translation()).lerp(
+          position,
+          positionIntFactor,
+        )
+        const newRot = quat(ref.current.rotation()).slerp(
+          quat(rotation),
+          rotationIntFactor,
+        )
+
+        ref.current.setTranslation(newPos, true)
+        ref.current.setRotation(newRot, true)
       }
     })
 

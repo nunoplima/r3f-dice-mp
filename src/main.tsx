@@ -1,9 +1,7 @@
-import { insertCoin, isHost, onPlayerJoin } from 'playroomkit'
+import { insertCoin } from 'playroomkit'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
-import { ERemotePlayerState } from './enums.ts'
-import { randomHexColor } from './functions.ts'
 import './index.css'
 
 insertCoin({
@@ -16,9 +14,3 @@ insertCoin({
     </React.StrictMode>,
   ),
 )
-
-onPlayerJoin((player) => {
-  if (!isHost()) return
-
-  player.setState(ERemotePlayerState.color, randomHexColor())
-})

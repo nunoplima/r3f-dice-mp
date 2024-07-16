@@ -9,9 +9,9 @@ body {
   width: 100dvw;
   position: relative;
   overflow: hidden;
-  cursor: none;
+  /* cursor: none; */
 }
 
 button {
-  cursor: none;
+  /* cursor: none; */
 }
